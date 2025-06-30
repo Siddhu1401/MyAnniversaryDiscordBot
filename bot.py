@@ -85,7 +85,7 @@ async def on_message(message):
         return
 
     if message.content.startswith('Hello'):
-        await message.channel.send(f'Hello {message.author.name}!')
+        await message.channel.send(f'Hello {message.author.mention}!')
     elif message.content.startswith('What time is it'):
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         await message.channel.send(f'Current time is: {current_time}')
