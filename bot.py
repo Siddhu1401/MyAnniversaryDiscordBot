@@ -4,6 +4,7 @@ from discord import app_commands
 from datetime import datetime, timedelta
 from discord.ext import commands
 from dotenv import load_dotenv
+from keep_alive import keep_alive
 # env file se variable load karne ke liye
 
 YOUR_GUILD_ID = 1388170909512241282 
@@ -299,5 +300,6 @@ async def anniversary(interaction: discord.Interaction):
     embed.set_footer(text=f"Mark your calendars for {anniversary_dt.strftime('%B %d, %Y at %I:%M %p')}")
     await interaction.response.send_message(embed=embed)
 
+keep_alive()
 
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
