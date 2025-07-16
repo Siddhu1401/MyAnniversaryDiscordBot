@@ -4,7 +4,10 @@ from discord import app_commands
 from datetime import datetime, timedelta
 from discord.ext import commands
 from dotenv import load_dotenv
-from keep_alive import keep_alive
+from datetime import datetime
+import pytz
+from dateutil.relativedelta import relativedelta # For accurate time difference
+
 # env file se variable load karne ke liye
 
 YOUR_GUILD_ID = 1388170909512241282 
@@ -238,26 +241,59 @@ async def mypoems(interaction: discord.Interaction):
 async def anniversary(interaction: discord.Interaction):
     anniversary_str = bot_data.get("anniversary_date")
     if not anniversary_str:
-        await interaction.response.send_message("Anniversary date not set in bot_data.json! Please configure it using `YYYY-MM-DD HH:MM:SS` format.", ephemeral=True)
+        await interaction.response.send_message("Anniversary date not set! Please configure it.", ephemeral=True)
         return
 
     try:
-        anniversary_dt = datetime.strptime(anniversary_str, "%Y-%m-%d %H:%M:%S")
-    except ValueError:
-        await interaction.response.send_message("Error: Invalid anniversary date format in bot_data.json. Use `YYYY-MM-DD HH:MM:SS`.", ephemeral=True)
+        # 1. Define your timezone
+        IST = pytz.timezone('Asia/Kolkata')
+
+        # 2. Create a "naive" datetime object from your string
+        naive_anniversary_dt = datetime.strptime(anniversary_str, "%Y-%m-%d %H:%M:%S")
+        
+        # 3. Make the anniversary date "aware" of the IST timezone
+        anniversary_dt = IST.localize(naive_anniversary_dt)
+
+    except (ValueError, pytz.UnknownTimeZoneError):
+        await interaction.response.send_message("Error: Invalid date format or timezone.", ephemeral=True)
         return
 
-    now = datetime.now()
-    time_left = anniversary_dt - now
+    # 4. Get the current time, also "aware" of the IST timezone
+    now = datetime.now(IST)
 
-    if time_left.total_seconds() <= 0:
+    # 5. Calculate the time difference accurately
+    if now < anniversary_dt:
+        time_left = relativedelta(anniversary_dt, now)
+
+        countdown_parts = []
+        if time_left.years > 0:
+            countdown_parts.append(f"**{time_left.years}** {'year' if time_left.years == 1 else 'years'}")
+        if time_left.months > 0:
+            countdown_parts.append(f"**{time_left.months}** {'month' if time_left.months == 1 else 'months'}")
+        if time_left.days > 0:
+            countdown_parts.append(f"**{time_left.days}** {'day' if time_left.days == 1 else 'days'}")
+        
+        countdown_parts.append(f"**{time_left.hours}** {'hour' if time_left.hours == 1 else 'hours'}")
+        countdown_parts.append(f"**{time_left.minutes}** {'minute' if time_left.minutes == 1 else 'minutes'}")
+        countdown_parts.append(f"**{time_left.seconds}** {'second' if time_left.seconds == 1 else 'seconds'}")
+
+        countdown_str = ", ".join(countdown_parts)
+        
+        embed = discord.Embed(
+            title="⏳ Anniversary Countdown! ⏳",
+            description=f"Our special day is in:\n{countdown_str}",
+            color=discord.Color.from_rgb(173, 216, 230) # Light Blue
+        )
+        embed.set_footer(text=f"Mark your calendars for {anniversary_dt.strftime('%B %d, %Y at %I:%M %p %Z')}")
+
+    else:
         embed = discord.Embed(
             title="🎉 Happy Anniversary! 🎉",
             description="💖 We're celebrating our special day right now!",
             color=discord.Color.from_rgb(255, 215, 0) # Gold
         )
-        await interaction.response.send_message(embed=embed)
-        return
+        
+    await interaction.response.send_message(embed=embed)
 
     # Calculate time components for display
     total_seconds = int(time_left.total_seconds())
@@ -300,6 +336,5 @@ async def anniversary(interaction: discord.Interaction):
     embed.set_footer(text=f"Mark your calendars for {anniversary_dt.strftime('%B %d, %Y at %I:%M %p')}")
     await interaction.response.send_message(embed=embed)
 
-keep_alive()
 
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
