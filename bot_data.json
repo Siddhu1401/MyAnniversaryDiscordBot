@@ -2,10 +2,9 @@
     "anniversary_date": "2025-08-04 04:44:44",
     "sweet_memories": [
         "Remember that time we first met? It feels like just yesterday.",
-        "Our first date was so special, I still smile thinking about it.",
-        "That unforgettable trip we took to [Place you visited] – one of my favorite memories.",
-        "Every moment with you is a sweet memory, especially when we [mention a specific shared hobby/activity].",
-        "The day you [something sweet she did/said] – that really stuck with me."
+        "Our first call was so cute bruh, even if I just saw the top of your head .",
+        "The day you opened up with me fully is one of my favorite memories.",
+        "Every moment with you is a sweet memory, especially when you rant to me like omg may this moment never end."
     ],
     "first_moments": {
         "first_met": "On August 27th, 2023.",
@@ -16,8 +15,7 @@
     },
     "our_songs": [
         {"title": "Tum Se Hii", "artist": "Mohit Chauhan", "link": "https://www.youtube.com/watch?v=mt9xg0mmt28"},
-        {"title": "Maula Mere Maula", "artist": "Roop Kumar Rathod", "link": "https://www.youtube.com/watch?v=l5sgIqzlPXc"},
-        {"title": "Your favorite song with her", "artist": "Artist Name", "link": "https://example.com/yoursong"}
+        {"title": "Maula Mere Maula", "artist": "Roop Kumar Rathod", "link": "https://www.youtube.com/watch?v=l5sgIqzlPXc"}
     ],
     "future_adventures": [
         "Go stargazing together in a dark sky park.",
