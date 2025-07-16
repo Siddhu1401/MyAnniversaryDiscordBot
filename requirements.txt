@@ -5,4 +5,5 @@ pygame
 python-dotenv
 yt-dlp
 discord.py
-Flask
+pytz
+python-dateutil
