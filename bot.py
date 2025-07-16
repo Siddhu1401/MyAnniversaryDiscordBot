@@ -6,6 +6,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from datetime import datetime
 import pytz
+import asyncio
 from dateutil.relativedelta import relativedelta # For accurate time difference
 
 # env file se variable load karne ke liye
@@ -63,16 +64,14 @@ def load_bot_data():
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user} has connected to Discord!')
-    load_bot_data()  # Load personalized data when the bot is ready
-    print(f"Attempting to sync commands to Guild ID: {YOUR_GUILD_ID}") # Added for debug
     try:
-        # guild_object = discord.Object(id=YOUR_GUILD_ID) guild=guild_object
+        # The sync command tells Discord to update the command list.
         synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} slash commands.")
+        print(f"Synced {len(synced)} command(s)")
     except Exception as e:
-        print(f"Failed to sync slash commands: {e}")
-
+        print(f"Failed to sync commands: {e}")
+        
+    print(f"{bot.user} is online!")
 @bot.event
 async def on_member_join(member):
     # Send DM to the user
@@ -239,30 +238,32 @@ async def mypoems(interaction: discord.Interaction):
 # --- Anniversary Command ---
 @bot.tree.command(name="anniversary", description="Shows the countdown to our anniversary!")
 async def anniversary(interaction: discord.Interaction):
+    # --- FIX 1: Load data fresh from the file every time ---
+    try:
+        with open('bot_data.json', 'r') as f:
+            bot_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        await interaction.response.send_message("Error: Could not read or parse bot_data.json.", ephemeral=True)
+        return
+
     anniversary_str = bot_data.get("anniversary_date")
     if not anniversary_str:
-        await interaction.response.send_message("Anniversary date not set! Please configure it.", ephemeral=True)
+        await interaction.response.send_message("Anniversary date not set in bot_data.json! Please configure it.", ephemeral=True)
         return
 
     try:
-        # 1. Define your timezone
+        # --- FIX 2: Make dates timezone-aware ---
         IST = pytz.timezone('Asia/Kolkata')
-
-        # 2. Create a "naive" datetime object from your string
         naive_anniversary_dt = datetime.strptime(anniversary_str, "%Y-%m-%d %H:%M:%S")
-        
-        # 3. Make the anniversary date "aware" of the IST timezone
         anniversary_dt = IST.localize(naive_anniversary_dt)
+        now = datetime.now(IST)
 
     except (ValueError, pytz.UnknownTimeZoneError):
-        await interaction.response.send_message("Error: Invalid date format or timezone.", ephemeral=True)
+        await interaction.response.send_message("Error: Invalid date format in bot_data.json. Use `YYYY-MM-DD HH:MM:SS`.", ephemeral=True)
         return
 
-    # 4. Get the current time, also "aware" of the IST timezone
-    now = datetime.now(IST)
-
-    # 5. Calculate the time difference accurately
     if now < anniversary_dt:
+        # --- FIX 3: Use accurate time calculation and clean up logic ---
         time_left = relativedelta(anniversary_dt, now)
 
         countdown_parts = []
@@ -294,47 +295,4 @@ async def anniversary(interaction: discord.Interaction):
         )
         
     await interaction.response.send_message(embed=embed)
-
-    # Calculate time components for display
-    total_seconds = int(time_left.total_seconds())
-
-    years = total_seconds // (365 * 24 * 3600)
-    total_seconds %= (365 * 24 * 3600)
-    
-    # Using 30 days as approximate for months for simplicity. 
-    # For more precise, you'd need date math considering exact days in months.
-    months = total_seconds // (30 * 24 * 3600) 
-    total_seconds %= (30 * 24 * 3600)
-    
-    days = total_seconds // (24 * 3600)
-    total_seconds %= (24 * 3600)
-    hours = total_seconds // 3600
-    total_seconds %= 3600
-    minutes = total_seconds // 60
-    seconds = total_seconds % 60
-
-    countdown_parts = []
-    if years > 0:
-        countdown_parts.append(f"{years} {'year' if years == 1 else 'years'}")
-    if months > 0:
-        countdown_parts.append(f"{months} {'month' if months == 1 else 'months'}")
-    if days > 0:
-        countdown_parts.append(f"{days} {'day' if days == 1 else 'days'}")
-    
-    # Always show hours, minutes, seconds for precise countdown
-    countdown_parts.append(f"{hours} {'hour' if hours == 1 else 'hours'}")
-    countdown_parts.append(f"{minutes} {'minute' if minutes == 1 else 'minutes'}")
-    countdown_parts.append(f"{seconds} {'second' if seconds == 1 else 'seconds'}")
-
-    countdown_str = ", ".join(countdown_parts)
-
-    embed = discord.Embed(
-        title="⏳ Anniversary Countdown! ⏳",
-        description=f"Our special day is in:\n**{countdown_str}**",
-        color=discord.Color.from_rgb(173, 216, 230) # Light Blue
-    )
-    embed.set_footer(text=f"Mark your calendars for {anniversary_dt.strftime('%B %d, %Y at %I:%M %p')}")
-    await interaction.response.send_message(embed=embed)
-
-
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
