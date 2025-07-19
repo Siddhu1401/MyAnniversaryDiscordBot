@@ -49,18 +49,13 @@ bot = commands.Bot(command_prefix='.', intents=intents)
 bot_data = {}
 
 def load_bot_data():
-    global bot_data
+    """Loads data from bot_data.json every time it's called."""
     try:
         with open('bot_data.json', 'r') as f:
-            bot_data = json.load(f)
-        print("Personalised data loaded successfully.")
-    except FileNotFoundError:
-        print("data.json not found. Create it to load your content later.")
-        bot_data = {} # Keep it empty for now if not found
-    except json.JSONDecodeError:
-        print("ERROR: data.json has a JSON formatting error. Please check it.")
-        bot_data = {}   
-
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Return an empty dictionary if the file is missing or broken
+        return {}
 
 @bot.event
 async def on_ready():
@@ -120,6 +115,7 @@ async def hello(interaction: discord.Interaction):
 
 @bot.tree.command(name="memory", description="Shares a random sweet memory from our journey.")
 async def memory(interaction: discord.Interaction):
+    bot_data = load_bot_data()
     memories = bot_data.get("sweet_memories", ["No sweet memories defined yet! Please add some to bot_data.json."])
     if memories:
         chosen_memory = random.choice(memories)
@@ -150,6 +146,7 @@ async def memory(interaction: discord.Interaction):
     # Add more app_commands.Choice lines here if you add more "firsts" to bot_data.json
 ])
 async def firsts(interaction: discord.Interaction, moment: str):
+    bot_data = load_bot_data()
     first_moments = bot_data.get("first_moments", {})
     
     # The 'moment' variable will now directly contain the chosen 'value' (e.g., "first_met")
@@ -175,6 +172,7 @@ async def firsts(interaction: discord.Interaction, moment: str):
 
 @bot.tree.command(name="oursong", description="Suggests a random song that's meaningful to us.")
 async def oursong(interaction: discord.Interaction):
+    bot_data = load_bot_data()
     songs = bot_data.get("our_songs", [])
     if songs:
         chosen_song = random.choice(songs)
@@ -193,6 +191,7 @@ async def oursong(interaction: discord.Interaction):
 
 @bot.tree.command(name="futureadventure", description="Suggests a fun idea for our next adventure!")
 async def futureadventure(interaction: discord.Interaction):
+    bot_data = load_bot_data() 
     adventures = bot_data.get("future_adventures", ["No future adventures defined yet! Please add some to bot_data.json."])
     if adventures:
         chosen_adventure = random.choice(adventures)
@@ -208,6 +207,7 @@ async def futureadventure(interaction: discord.Interaction):
 
 @bot.tree.command(name="iloveyou", description="A special message just for you.")
 async def iloveyou(interaction: discord.Interaction):
+    bot_data = load_bot_data()
     compliments = bot_data.get("compliments", ["You're simply amazing!", "No compliments defined yet! Please add some to bot_data.json."])
     if compliments:
         chosen_compliment = random.choice(compliments)
@@ -223,6 +223,7 @@ async def iloveyou(interaction: discord.Interaction):
 
 @bot.tree.command(name="mypoems", description="Shares a beautiful poem from my heart.")
 async def mypoems(interaction: discord.Interaction):
+    bot_data = load_bot_data()
     poems = bot_data.get("my_poems", ["No poems defined yet! Please add some to bot_data.json."])
     if poems:
         chosen_poem = random.choice(poems)
@@ -238,6 +239,7 @@ async def mypoems(interaction: discord.Interaction):
 # --- Anniversary Command ---
 @bot.tree.command(name="anniversary", description="Shows the countdown to our anniversary!")
 async def anniversary(interaction: discord.Interaction):
+    bot_data = load_bot_data()
     # --- FIX 1: Load data fresh from the file every time ---
     try:
         with open('bot_data.json', 'r') as f:
